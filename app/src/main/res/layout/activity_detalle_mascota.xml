@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFF9C4">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:id="@+id/tvNombre"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="@font/adamina"
+            android:textSize="30sp"
+            android:textStyle="bold"
+            android:textColor="#4E342E"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:id="@+id/tvDatosBasicos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="15sp"
+            android:textColor="#6D4C41"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- CONTENEDOR FOTO -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="220dp"
+            android:background="#FFECB3"
+            android:layout_marginBottom="20dp">
+
+            <ImageView
+                android:id="@+id/imgMascota"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"/>
+
+            <!-- OVERLAY: icono cámara (visible cuando no hay foto) -->
+            <LinearLayout
+                android:id="@+id/layoutSinFoto"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="#FFECB3">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📷"
+                    android:textSize="64sp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Añadir foto"
+                    android:textColor="#BCAAA4"
+                    android:textSize="14sp"
+                    android:layout_marginTop="8dp"/>
+
+            </LinearLayout>
+
+        </FrameLayout>
+
+        <!-- TARJETA DATOS -->
+        <LinearLayout
+            android:id="@+id/cardDatos"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFECB3"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📋 Datos generales"
+                android:textColor="#4E342E"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/tvEdad"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#4E342E"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvColor"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#4E342E"
+                android:layout_marginBottom="4dp"/>
+
+            <TextView
+                android:id="@+id/tvMicrochip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#4E342E"/>
+
+        </LinearLayout>
+
+        <!-- TARJETA VACUNAS -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFECB3"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="💉 Vacunas administradas"
+                android:textColor="#4E342E"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/tvVacunas"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#4E342E"/>
+
+        </LinearLayout>
+
+        <!-- TARJETA CONDICIONES -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFECB3"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="🩺 Condiciones médicas"
+                android:textColor="#4E342E"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/tvCondiciones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#4E342E"/>
+
+        </LinearLayout>
+
+        <!-- TARJETA OBSERVACIONES -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="#FFECB3"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="📝 Observaciones"
+                android:textColor="#4E342E"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp"/>
+
+            <TextView
+                android:id="@+id/tvObservaciones"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="15sp"
+                android:textColor="#4E342E"/>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnEditar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="✏️ Editar mascota"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#FBC02D"
+            android:layout_marginBottom="12dp"
+            android:visibility="gone"/>
+
+        <Button
+            android:id="@+id/btnEliminar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🗑️ Eliminar mascota"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#E53935"
+            android:layout_marginBottom="24dp"
+            android:visibility="gone"/>
+
+    </LinearLayout>
+</ScrollView>

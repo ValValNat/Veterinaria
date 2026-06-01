@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Veterinaria</string>
+    <string name="PetCare">PetCare</string>
+    <string name="Introduzca">Introduzca sus datos</string>
+    <string name="CrearPas">Crear cuenta</string>
+    <string name="usuarios">Usuarios</string>
+    <string name="Menu">Menú</string>
+    <string name="Mascotas">Pacientes</string>
+    <string name="Mascotas1">Mascotas</string>
+</resources>

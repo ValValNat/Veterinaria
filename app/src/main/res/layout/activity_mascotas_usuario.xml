@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFF9C4">
+
+    <!-- TÍTULO -->
+    <TextView
+        android:id="@+id/tvTitulo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        android:fontFamily="@font/adamina"
+        android:text="Mis mascotas"
+        android:textColor="#4E342E"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
+    <!-- BOTÓN CONTACTAR (abajo fijo) -->
+    <Button
+        android:id="@+id/btnContactar"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="#FBC02D"
+        android:text="📞 Contactar con PetCare"
+        android:textAllCaps="false"
+        android:textColor="#FFFFFF"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@id/tvLegal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <!-- SCROLL MASCOTAS (entre título y botón) -->
+    <ScrollView
+        android:id="@+id/scrollMascotas"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="12dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/tvTitulo"
+        app:layout_constraintBottom_toTopOf="@id/btnContactar"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layoutMascotas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"/>
+
+    </ScrollView>
+
+    <!-- PIE LEGAL -->
+    <TextView
+        android:id="@+id/tvLegal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="8dp"
+        android:gravity="center"
+        android:lineSpacingExtra="3dp"
+        android:text="PetCare Veterinaria · C/ Gran Vía 45, 28013 Madrid\n© 2025 PetCare S.L. · CIF: B-87654321\nTus datos son tratados conforme al RGPD (UE) 2016/679.\nPuedes ejercer tus derechos escribiendo a privacidad@petcare.es"
+        android:textColor="#BDBDBD"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
