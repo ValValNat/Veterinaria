@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class PanelVeterinario extends AppCompatActivity {
 
-    Button btnIrUsuarios, btnPacientes, btnAsignarCita;
+    Button btnIrUsuarios, btnPacientes, btnVerCitas, btnAsignarCita;
 
     @SuppressLint("MissingInflatedId")
     @Override
@@ -17,9 +17,10 @@ public class PanelVeterinario extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_menu_veterinario);
 
-        btnIrUsuarios       = findViewById(R.id.btnIrUsuarios);
-        btnPacientes        = findViewById(R.id.btnPacientes);
-        btnAsignarCita      = findViewById(R.id.btnAsignarCita);
+        btnIrUsuarios  = findViewById(R.id.btnIrUsuarios);
+        btnPacientes   = findViewById(R.id.btnPacientes);
+        btnVerCitas    = findViewById(R.id.btnVerCitas);
+        btnAsignarCita = findViewById(R.id.btnAsignarCita);
 
         btnIrUsuarios.setOnClickListener(v ->
                 startActivity(new Intent(this, VeterinarioListado.class)));
@@ -27,6 +28,8 @@ public class PanelVeterinario extends AppCompatActivity {
         btnPacientes.setOnClickListener(v ->
                 startActivity(new Intent(this, PacientesActivity.class)));
 
+        btnVerCitas.setOnClickListener(v ->
+                startActivity(new Intent(this, CitasActivity.class)));
 
         btnAsignarCita.setOnClickListener(v ->
                 startActivity(new Intent(this, AsignarCitaActivity.class)));

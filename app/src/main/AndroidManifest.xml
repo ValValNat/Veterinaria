@@ -2,9 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -15,6 +18,9 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.Veterinaria">
+        <activity
+            android:name=".CitasActivity"
+            android:exported="false" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -23,30 +29,43 @@
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/file_paths"/>
+                android:resource="@xml/file_paths" />
         </provider>
 
-        <activity android:name=".PacientesActivity" android:exported="false"/>
-        <activity android:name=".AsignarCitaActivity" android:exported="false"/>
-        <activity android:name=".DetalleMascota" android:exported="false"/>
-        <activity android:name=".VeterinarioListado" android:exported="false"/>
-        <activity android:name=".PanelVeterinario" android:exported="false"/>
-        <activity android:name=".Mascotas_usuario" android:exported="false"/>
-        <activity android:name=".CrearPass" android:exported="false"/>
-
+        <activity
+            android:name=".PacientesActivity"
+            android:exported="false" />
+        <activity
+            android:name=".AsignarCitaActivity"
+            android:exported="false" />
+        <activity
+            android:name=".DetalleMascota"
+            android:exported="false" />
+        <activity
+            android:name=".VeterinarioListado"
+            android:exported="false" />
+        <activity
+            android:name=".PanelVeterinario"
+            android:exported="false" />
+        <activity
+            android:name=".Mascotas_usuario"
+            android:exported="false" />
+        <activity
+            android:name=".CrearPass"
+            android:exported="false" />
         <activity
             android:name=".Inicio"
             android:exported="true">
             <intent-filter>
-                <action android:name="android.intent.action.MAIN"/>
-                <category android:name="android.intent.category.LAUNCHER"/>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
         <meta-data
             android:name="preloaded_fonts"
-            android:resource="@array/preloaded_fonts"/>
-
+            android:resource="@array/preloaded_fonts" />
     </application>
 
 </manifest>
