@@ -24,7 +24,6 @@ public class VeterinarioListado extends AppCompatActivity {
     private final List<Map<String, Object>> listaUsuarios = new ArrayList<>();
     private final List<String> idsUsuarios = new ArrayList<>();
 
-    // ─── Razas ────────────────────────────────
     private static final String[] RAZAS_PERRO = {
             "Labrador Retriever", "Golden Retriever", "Pastor Alemán",
             "Bulldog Francés", "Caniche / Poodle", "Yorkshire Terrier",
@@ -39,8 +38,6 @@ public class VeterinarioListado extends AppCompatActivity {
             "Scottish Fold", "Angora", "Ruso Azul", "Noruego del Bosque",
             "Otra raza", "Desconocido"
     };
-
-    // ─── Vacunas ──────────────────────────────
     private static final String[] VACUNAS_PERRO = {
             "Moquillo canino", "Parvovirus canino",
             "Hepatitis infecciosa canina", "Leptospirosis", "Rabia",
@@ -185,6 +182,7 @@ public class VeterinarioListado extends AppCompatActivity {
         spinnerTipo.setSelection(getStr(datos, "tipo", "USER").equals("MASTER") ? 1 : 0);
         container.addView(spinnerTipo);
 
+        // ── Sección mascotas ──────────────────
         LinearLayout seccionMascotas = new LinearLayout(this);
         seccionMascotas.setOrientation(LinearLayout.VERTICAL);
         LinearLayout.LayoutParams mp = new LinearLayout.LayoutParams(
@@ -197,19 +195,42 @@ public class VeterinarioListado extends AppCompatActivity {
         tvMascotas.setText("🐾 Mascotas asignadas");
         tvMascotas.setTextColor(0xFF4E342E);
         tvMascotas.setTextSize(16f);
+        tvMascotas.setTypeface(null, android.graphics.Typeface.BOLD);
         seccionMascotas.addView(tvMascotas);
 
         LinearLayout listaMascotas = new LinearLayout(this);
         listaMascotas.setOrientation(LinearLayout.VERTICAL);
         seccionMascotas.addView(listaMascotas);
 
+        // Botón: asignar mascota existente sin dueño
+        Button btnAsignarExistente = new Button(this);
+        btnAsignarExistente.setText("🔗 Asignar mascota existente");
+        btnAsignarExistente.setAllCaps(false);
+        btnAsignarExistente.setBackgroundColor(0xFF6D4C41);
+        btnAsignarExistente.setTextColor(0xFFFFFFFF);
+        LinearLayout.LayoutParams pBtnEx = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        pBtnEx.setMargins(0, 8, 0, 4);
+        btnAsignarExistente.setLayoutParams(pBtnEx);
+        btnAsignarExistente.setOnClickListener(v ->
+                mostrarDialogAsignarExistente(uid, listaMascotas));
+        seccionMascotas.addView(btnAsignarExistente);
+
+        // Botón: crear mascota nueva
         Button btnAnadir = new Button(this);
-        btnAnadir.setText("+ Añadir mascota");
+        btnAnadir.setText("+ Crear nueva mascota");
+        btnAnadir.setAllCaps(false);
         btnAnadir.setBackgroundColor(0xFFFBC02D);
         btnAnadir.setTextColor(0xFFFFFFFF);
-        seccionMascotas.addView(btnAnadir);
+        LinearLayout.LayoutParams pBtnNew = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        pBtnNew.setMargins(0, 4, 0, 0);
+        btnAnadir.setLayoutParams(pBtnNew);
         btnAnadir.setOnClickListener(v ->
                 mostrarDialogAnadirMascota(uid, listaMascotas));
+        seccionMascotas.addView(btnAnadir);
 
         if (getStr(datos, "tipo", "USER").equals("USER")) {
             container.addView(seccionMascotas);
@@ -257,6 +278,67 @@ public class VeterinarioListado extends AppCompatActivity {
                             Toast.makeText(this, "Error: " + e.getMessage(),
                                     Toast.LENGTH_LONG).show());
         });
+    }
+
+    // ═════════════════════════════════════════
+    // ASIGNAR MASCOTA EXISTENTE SIN DUEÑO
+    // ═════════════════════════════════════════
+    private void mostrarDialogAsignarExistente(String uid, LinearLayout listaMascotas) {
+        // Buscar mascotas sin ownerId o con ownerId vacío
+        db.collection("mascotas").get()
+                .addOnSuccessListener(snapshot -> {
+                    List<String> nombres = new ArrayList<>();
+                    List<String> ids     = new ArrayList<>();
+
+                    for (QueryDocumentSnapshot doc : snapshot) {
+                        String ownerId = doc.getString("ownerId");
+                        if (ownerId == null || ownerId.isEmpty()) {
+                            String nombre  = doc.getString("nombre");
+                            String especie = doc.getString("especie");
+                            nombres.add((nombre != null ? nombre : "Sin nombre")
+                                    + " (" + (especie != null ? especie : "-") + ")");
+                            ids.add(doc.getId());
+                        }
+                    }
+
+                    if (nombres.isEmpty()) {
+                        Toast.makeText(this,
+                                "No hay mascotas sin dueño asignado",
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    // Mostrar lista para seleccionar
+                    String[] opcionesArray = nombres.toArray(new String[0]);
+
+                    new AlertDialog.Builder(this)
+                            .setTitle("🔗 Selecciona una mascota")
+                            .setItems(opcionesArray, (d, which) -> {
+                                String mascotaId = ids.get(which);
+
+                                // Asignar ownerId a la mascota seleccionada
+                                Map<String, Object> update = new HashMap<>();
+                                update.put("ownerId", uid);
+
+                                db.collection("mascotas").document(mascotaId)
+                                        .set(update, SetOptions.merge())
+                                        .addOnSuccessListener(unused -> {
+                                            Toast.makeText(this,
+                                                    "Mascota asignada ✔",
+                                                    Toast.LENGTH_SHORT).show();
+                                            cargarMascotasEnDialog(uid, listaMascotas);
+                                        })
+                                        .addOnFailureListener(e ->
+                                                Toast.makeText(this,
+                                                        "Error: " + e.getMessage(),
+                                                        Toast.LENGTH_LONG).show());
+                            })
+                            .setNegativeButton("Cancelar", null)
+                            .show();
+                })
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Error: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show());
     }
 
     // ═════════════════════════════════════════
@@ -310,41 +392,33 @@ public class VeterinarioListado extends AppCompatActivity {
     }
 
     // ═════════════════════════════════════════
-    // DIALOG AÑADIR MASCOTA (COMPLETO)
+    // DIALOG AÑADIR MASCOTA NUEVA
     // ═════════════════════════════════════════
     private void mostrarDialogAnadirMascota(String uid, LinearLayout listaMascotasDialog) {
-
         ScrollView scroll = new ScrollView(this);
         LinearLayout form = new LinearLayout(this);
         form.setOrientation(LinearLayout.VERTICAL);
         form.setPadding(48, 32, 48, 32);
         scroll.addView(form);
 
-        // ── Microchip ──────────────────────────
         form.addView(label("Microchip"));
         LinearLayout rowChip = new LinearLayout(this);
         rowChip.setOrientation(LinearLayout.HORIZONTAL);
         rowChip.setGravity(android.view.Gravity.CENTER_VERTICAL);
         TextView tvChipNo = new TextView(this);
-        tvChipNo.setText("No  ");
-        tvChipNo.setTextColor(0xFF4E342E);
+        tvChipNo.setText("No  "); tvChipNo.setTextColor(0xFF4E342E);
         Switch switchChip = new Switch(this);
         switchChip.setThumbTintList(android.content.res.ColorStateList.valueOf(0xFFFBC02D));
         switchChip.setTrackTintList(android.content.res.ColorStateList.valueOf(0xFFFFECB3));
         TextView tvChipSi = new TextView(this);
-        tvChipSi.setText("  Sí");
-        tvChipSi.setTextColor(0xFF4E342E);
-        rowChip.addView(tvChipNo);
-        rowChip.addView(switchChip);
-        rowChip.addView(tvChipSi);
+        tvChipSi.setText("  Sí"); tvChipSi.setTextColor(0xFF4E342E);
+        rowChip.addView(tvChipNo); rowChip.addView(switchChip); rowChip.addView(tvChipSi);
         form.addView(rowChip);
 
-        // ── Nombre ─────────────────────────────
         form.addView(label("Nombre *"));
         EditText etNombre = input("", "Nombre de la mascota");
         form.addView(etNombre);
 
-        // ── Edad ───────────────────────────────
         form.addView(label("Edad"));
         String[] edades = new String[17];
         edades[0] = "Menos de 1 año";
@@ -353,13 +427,11 @@ public class VeterinarioListado extends AppCompatActivity {
         Spinner spinnerEdad = spinner(edades);
         form.addView(spinnerEdad);
 
-        // ── Especie ────────────────────────────
         form.addView(label("Especie *"));
         String[] especies = {"Perro", "Gato"};
         Spinner spinnerEspecie = spinner(especies);
         form.addView(spinnerEspecie);
 
-        // ── Raza (AutoComplete editable) ────────
         form.addView(label("Raza"));
         AutoCompleteTextView acRaza = new AutoCompleteTextView(this);
         acRaza.setHint("Escribe o selecciona una raza");
@@ -370,45 +442,32 @@ public class VeterinarioListado extends AppCompatActivity {
         acRaza.setThreshold(1);
         form.addView(acRaza);
 
-        // ── Color pelaje ───────────────────────
         form.addView(label("Color del pelaje"));
         EditText etColor = input("", "Ej: negro, blanco, atigrado...");
         form.addView(etColor);
 
-        // ── Condiciones médicas ────────────────
         form.addView(label("Condiciones médicas"));
         LinearLayout layoutCondiciones = new LinearLayout(this);
         layoutCondiciones.setOrientation(LinearLayout.VERTICAL);
         form.addView(layoutCondiciones);
-
         Button btnAddCondicion = new Button(this);
         btnAddCondicion.setText("+ Añadir condición");
         btnAddCondicion.setAllCaps(false);
         btnAddCondicion.setBackgroundColor(0xFFFFECB3);
         btnAddCondicion.setTextColor(0xFFFBC02D);
-        LinearLayout.LayoutParams pBtn = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT);
-        pBtn.setMargins(0, 4, 0, 12);
-        btnAddCondicion.setLayoutParams(pBtn);
-        btnAddCondicion.setOnClickListener(v ->
-                agregarCampoCondicion(layoutCondiciones));
+        btnAddCondicion.setOnClickListener(v -> agregarCampoCondicion(layoutCondiciones));
         form.addView(btnAddCondicion);
 
-        // ── Vacunas (dinámicas) ────────────────
         form.addView(label("Vacunas administradas"));
         LinearLayout layoutVacunas = new LinearLayout(this);
         layoutVacunas.setOrientation(LinearLayout.VERTICAL);
         form.addView(layoutVacunas);
 
-        // Inicializar con perro por defecto
         actualizarRazas(acRaza, true);
         actualizarVacunas(layoutVacunas, true);
 
-        // Cambio dinámico según especie
         spinnerEspecie.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
+            @Override public void onItemSelected(AdapterView<?> p, View v, int pos, long id) {
                 boolean esPerro = pos == 0;
                 actualizarRazas(acRaza, esPerro);
                 actualizarVacunas(layoutVacunas, esPerro);
@@ -416,7 +475,6 @@ public class VeterinarioListado extends AppCompatActivity {
             @Override public void onNothingSelected(AdapterView<?> p) {}
         });
 
-        // ── Construir dialog ───────────────────
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("🐾 Nueva mascota")
                 .setView(scroll)
@@ -426,53 +484,38 @@ public class VeterinarioListado extends AppCompatActivity {
         dialog.show();
 
         dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-
             String nombre = etNombre.getText().toString().trim();
             if (nombre.isEmpty()) {
                 Toast.makeText(this, "El nombre es obligatorio",
                         Toast.LENGTH_SHORT).show();
                 return;
             }
-
-            // Recoger condiciones médicas
             List<String> condiciones = new ArrayList<>();
             for (int i = 0; i < layoutCondiciones.getChildCount(); i++) {
                 View child = layoutCondiciones.getChildAt(i);
                 if (child instanceof LinearLayout) {
                     LinearLayout fila = (LinearLayout) child;
-                    for (int j = 0; j < fila.getChildCount(); j++) {
+                    for (int j = 0; j < fila.getChildCount(); j++)
                         if (fila.getChildAt(j) instanceof EditText) {
                             String c = ((EditText) fila.getChildAt(j))
                                     .getText().toString().trim();
                             if (!c.isEmpty()) condiciones.add(c);
                         }
-                    }
                 }
             }
-
-            // Recoger vacunas marcadas
             List<String> vacunas = new ArrayList<>();
             for (int i = 0; i < layoutVacunas.getChildCount(); i++) {
                 View child = layoutVacunas.getChildAt(i);
-                if (child instanceof CheckBox) {
-                    CheckBox cb = (CheckBox) child;
-                    if (cb.isChecked()) vacunas.add(cb.getText().toString());
-                }
+                if (child instanceof CheckBox && ((CheckBox) child).isChecked())
+                    vacunas.add(((CheckBox) child).getText().toString());
             }
-
-            String especie = especies[spinnerEspecie.getSelectedItemPosition()];
-            String raza    = acRaza.getText().toString().trim();
-            String edad    = edades[spinnerEdad.getSelectedItemPosition()];
-            String color   = etColor.getText().toString().trim();
-            boolean microchip = switchChip.isChecked();
-
             Map<String, Object> mascota = new HashMap<>();
             mascota.put("nombre",      nombre);
-            mascota.put("especie",     especie);
-            mascota.put("raza",        raza);
-            mascota.put("edad",        edad);
-            mascota.put("color",       color);
-            mascota.put("microchip",   microchip);
+            mascota.put("especie",     especies[spinnerEspecie.getSelectedItemPosition()]);
+            mascota.put("raza",        acRaza.getText().toString().trim());
+            mascota.put("edad",        edades[spinnerEdad.getSelectedItemPosition()]);
+            mascota.put("color",       etColor.getText().toString().trim());
+            mascota.put("microchip",   switchChip.isChecked());
             mascota.put("condiciones", condiciones);
             mascota.put("vacunas",     vacunas);
             mascota.put("ownerId",     uid);
@@ -490,7 +533,6 @@ public class VeterinarioListado extends AppCompatActivity {
         });
     }
 
-    // ── Añadir fila de condición médica ───────
     private void agregarCampoCondicion(LinearLayout layout) {
         LinearLayout fila = new LinearLayout(this);
         fila.setOrientation(LinearLayout.HORIZONTAL);
@@ -499,7 +541,6 @@ public class VeterinarioListado extends AppCompatActivity {
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         p.setMargins(0, 4, 0, 4);
         fila.setLayoutParams(p);
-
         EditText et = new EditText(this);
         et.setHint("Condición médica");
         et.setTextColor(0xFF4E342E);
@@ -510,7 +551,6 @@ public class VeterinarioListado extends AppCompatActivity {
         et.setLayoutParams(new LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
         fila.addView(et);
-
         Button btnRemove = new Button(this);
         btnRemove.setText("✕");
         btnRemove.setTextColor(0xFFFFFFFF);
@@ -520,7 +560,6 @@ public class VeterinarioListado extends AppCompatActivity {
         layout.addView(fila);
     }
 
-    // ── Actualizar razas según especie ────────
     private void actualizarRazas(AutoCompleteTextView ac, boolean esPerro) {
         String[] razas = esPerro ? RAZAS_PERRO : RAZAS_GATO;
         ArrayAdapter<String> ad = new ArrayAdapter<>(this,
@@ -529,7 +568,6 @@ public class VeterinarioListado extends AppCompatActivity {
         ac.setText("");
     }
 
-    // ── Actualizar vacunas según especie ──────
     private void actualizarVacunas(LinearLayout layout, boolean esPerro) {
         layout.removeAllViews();
         String[] vacunas = esPerro ? VACUNAS_PERRO : VACUNAS_GATO;
@@ -637,8 +675,7 @@ public class VeterinarioListado extends AppCompatActivity {
         Spinner sp = new Spinner(this);
         ArrayAdapter<String> ad = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, opciones);
-        ad.setDropDownViewResource(
-                android.R.layout.simple_spinner_dropdown_item);
+        ad.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         sp.setAdapter(ad);
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT,
