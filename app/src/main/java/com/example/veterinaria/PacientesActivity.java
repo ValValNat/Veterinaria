@@ -6,23 +6,25 @@ import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
 import android.widget.*;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.firebase.firestore.*;
-
 import java.util.*;
 
+// Pantalla "Pacientes" del veterinario
+// Muestra todas las mascotas con buscador en tiempo real y boton para crear nuevas
 public class PacientesActivity extends AppCompatActivity {
 
     private EditText etBuscar;
     private LinearLayout layoutPacientes;
     private FirebaseFirestore db;
 
+    // Dos listas paralelas: datos de cada mascota y su ID de Firebase
+    // La posicion 0 de ambas listas corresponde siempre a la misma mascota
     private final List<Map<String, Object>> listaMascotas = new ArrayList<>();
     private final List<String> idsMascotas = new ArrayList<>();
 
-    // Razas y vacunas para el dialog de crear
+    // Razas, vacunas y edades para el formulario de crear mascota
+    // Son static final porque nunca cambian
     private static final String[] RAZAS_PERRO = {
             "Labrador Retriever","Golden Retriever","Pastor Alemán",
             "Bulldog Francés","Caniche / Poodle","Yorkshire Terrier",
@@ -31,24 +33,29 @@ public class PacientesActivity extends AppCompatActivity {
             "Cocker Spaniel","Dálmata","Pomerania","Border Collie",
             "Galgo Español","Otra raza","Desconocido"
     };
+
     private static final String[] RAZAS_GATO = {
             "Europeo Común","Persa","Siamés","Maine Coon","Bengalí",
             "Ragdoll","British Shorthair","Abisinio","Esfinge",
             "Scottish Fold","Angora","Ruso Azul","Noruego del Bosque",
             "Otra raza","Desconocido"
     };
+
     private static final String[] VACUNAS_PERRO = {
             "Moquillo canino","Parvovirus canino",
             "Hepatitis infecciosa canina","Leptospirosis","Rabia",
             "Tos de las perreras (Bordetella)","Leishmaniosis"
     };
+
     private static final String[] VACUNAS_GATO = {
             "Panleucopenia felina","Rinotraqueítis viral (Herpesvirus)",
             "Calicivirus felino","Leucemia felina (FeLV)",
             "Rabia","Clamidiosis felina"
     };
+
     private static final String[] EDADES = buildEdades();
 
+    // Genera ["Menos de 1 año", "1 año", "2 años", ..., "15 años", "Mas de 15 años"]
     private static String[] buildEdades() {
         String[] e = new String[17];
         e[0] = "Menos de 1 año";
@@ -56,6 +63,7 @@ public class PacientesActivity extends AppCompatActivity {
         e[16] = "Más de 15 años";
         return e;
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,8 +77,7 @@ public class PacientesActivity extends AppCompatActivity {
         findViewById(R.id.btnCrearMascota).setOnClickListener(v ->
                 mostrarDialogCrearMascota());
 
-        // YA NO HAY cargarMascotas("") AQUÍ
-
+        // Buscador en tiempo real: filtra en cada tecla pulsada
         etBuscar.addTextChangedListener(new TextWatcher() {
             @Override public void beforeTextChanged(CharSequence s, int i, int i1, int i2) {}
             @Override public void onTextChanged(CharSequence s, int i, int i1, int i2) {
@@ -80,18 +87,27 @@ public class PacientesActivity extends AppCompatActivity {
         });
     }
 
+
+    // onResume se ejecuta cada vez que la pantalla vuelve a ser visible
+    // Recargamos para reflejar cambios hechos en otras pantallas (ej: borrar una mascota)
     @Override
     protected void onResume() {
         super.onResume();
         cargarMascotas(etBuscar.getText().toString().toLowerCase());
     }
+
+
+    // Descarga todas las mascotas de Firebase y filtra por nombre
+    // El filtrado se hace aqui porque Firebase no soporta busqueda de texto parcial
     private void cargarMascotas(String filtro) {
         db.collection("mascotas").get()
                 .addOnSuccessListener(snapshot -> {
                     listaMascotas.clear();
                     idsMascotas.clear();
+
                     for (QueryDocumentSnapshot doc : snapshot) {
                         String nombre = doc.getString("nombre");
+                        // contains("") siempre es true, asi que con filtro vacio se muestran todas
                         if (nombre != null && nombre.toLowerCase().contains(filtro)) {
                             listaMascotas.add(doc.getData());
                             idsMascotas.add(doc.getId());
@@ -104,9 +120,8 @@ public class PacientesActivity extends AppCompatActivity {
                                 Toast.LENGTH_LONG).show());
     }
 
-    // ─────────────────────────────────────────
-    // MOSTRAR FILAS
-    // ─────────────────────────────────────────
+
+    // Pinta una fila por cada mascota de la lista
     private void mostrarMascotas() {
         layoutPacientes.removeAllViews();
 
@@ -121,6 +136,9 @@ public class PacientesActivity extends AppCompatActivity {
         }
 
         for (int i = 0; i < listaMascotas.size(); i++) {
+            // "id" como final para poder usarlo dentro del listener del boton
+            // Si usaramos idsMascotas.get(i) dentro de la lambda, Java se quejaria
+            // porque "i" cambia en cada iteracion del bucle
             final String id = idsMascotas.get(i);
             Map<String, Object> m = listaMascotas.get(i);
 
@@ -138,9 +156,9 @@ public class PacientesActivity extends AppCompatActivity {
             fila.setLayoutParams(fp);
             fila.setPadding(20, 16, 16, 16);
 
-            // Icono especie
             String icono = "Gato".equals(especie) ? "🐱 " : "🐶 ";
 
+            // weight = 1f: ocupa todo el espacio sobrante dejando sitio justo para el boton
             TextView tv = new TextView(this);
             tv.setText(icono + nombre + "\n" + especie + " · " + raza);
             tv.setTextColor(0xFF4E342E);
@@ -164,15 +182,19 @@ public class PacientesActivity extends AppCompatActivity {
                 intent.putExtra("idMascota", id);
                 startActivity(intent);
             });
+
             fila.addView(btnVer);
             layoutPacientes.addView(fila);
         }
     }
 
-    // ─────────────────────────────────────────
-    // DIALOG CREAR MASCOTA (sin dueño asignado)
-    // ─────────────────────────────────────────
+
+    // Formulario para registrar una mascota nueva
+    // Se puede crear sin dueno asignado o vincularla a uno escribiendo su email
     private void mostrarDialogCrearMascota() {
+
+        // android.app.AlertDialog con paquete completo para evitar conflicto
+        // con androidx.appcompat.app.AlertDialog que tambien existe
         android.app.AlertDialog.Builder builder =
                 new android.app.AlertDialog.Builder(this);
         builder.setTitle("🐾 Nueva mascota");
@@ -183,42 +205,45 @@ public class PacientesActivity extends AppCompatActivity {
         form.setPadding(48, 32, 48, 32);
         scroll.addView(form);
 
-        // Microchip
+        // Fila "No - switch - Si"
         form.addView(label("Microchip"));
         LinearLayout rowChip = new LinearLayout(this);
         rowChip.setOrientation(LinearLayout.HORIZONTAL);
         rowChip.setGravity(android.view.Gravity.CENTER_VERTICAL);
-        TextView tvNo = new TextView(this); tvNo.setText("No  "); tvNo.setTextColor(0xFF4E342E);
+        TextView tvNo = new TextView(this);
+        tvNo.setText("No  ");
+        tvNo.setTextColor(0xFF4E342E);
         Switch swChip = new Switch(this);
         swChip.setThumbTintList(android.content.res.ColorStateList.valueOf(0xFFFBC02D));
         swChip.setTrackTintList(android.content.res.ColorStateList.valueOf(0xFFFFECB3));
-        TextView tvSi = new TextView(this); tvSi.setText("  Sí"); tvSi.setTextColor(0xFF4E342E);
-        rowChip.addView(tvNo); rowChip.addView(swChip); rowChip.addView(tvSi);
+        TextView tvSi = new TextView(this);
+        tvSi.setText("  Sí");
+        tvSi.setTextColor(0xFF4E342E);
+        rowChip.addView(tvNo);
+        rowChip.addView(swChip);
+        rowChip.addView(tvSi);
         form.addView(rowChip);
 
-        // Nombre
         form.addView(label("Nombre *"));
         EditText etNombre = input("", "Nombre de la mascota");
         form.addView(etNombre);
 
-        // Dueño (email o UID opcional)
+        // Si se rellena este campo buscamos al dueno por email y vinculamos la mascota
+        // Si se deja vacio la mascota queda sin dueno hasta que se asigne manualmente
         form.addView(label("Email del dueño (opcional)"));
         EditText etDueno = input("", "email@ejemplo.com");
         etDueno.setInputType(InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
         form.addView(etDueno);
 
-        // Edad
         form.addView(label("Edad"));
         Spinner spEdad = spinnerOf(EDADES);
         form.addView(spEdad);
 
-        // Especie
         form.addView(label("Especie *"));
         String[] especies = {"Perro", "Gato"};
         Spinner spEspecie = spinnerOf(especies);
         form.addView(spEspecie);
 
-        // Raza
         form.addView(label("Raza"));
         AutoCompleteTextView acRaza = new AutoCompleteTextView(this);
         acRaza.setHint("Escribe o selecciona una raza");
@@ -229,12 +254,10 @@ public class PacientesActivity extends AppCompatActivity {
         acRaza.setThreshold(1);
         form.addView(acRaza);
 
-        // Color
         form.addView(label("Color del pelaje"));
         EditText etColor = input("", "Ej: negro, blanco, atigrado...");
         form.addView(etColor);
 
-        // Condiciones
         form.addView(label("Condiciones médicas"));
         LinearLayout layoutCond = new LinearLayout(this);
         layoutCond.setOrientation(LinearLayout.VERTICAL);
@@ -247,19 +270,20 @@ public class PacientesActivity extends AppCompatActivity {
         btnAddCond.setOnClickListener(v -> agregarCampoCond(layoutCond));
         form.addView(btnAddCond);
 
-        // Vacunas
         form.addView(label("Vacunas administradas"));
         LinearLayout layoutVac = new LinearLayout(this);
         layoutVac.setOrientation(LinearLayout.VERTICAL);
         form.addView(layoutVac);
 
-        // Init perro por defecto
+        // Perro por defecto porque es la primera opcion del spinner
         actualizarRazas(acRaza, true);
         actualizarVacunas(layoutVac, true);
 
+        // Al cambiar la especie actualizamos razas y vacunas dinamicamente
         spEspecie.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> p, android.view.View v,
-                                                 int pos, long id) {
+            @Override
+            public void onItemSelected(AdapterView<?> p, android.view.View v,
+                                       int pos, long id) {
                 boolean esPerro = pos == 0;
                 actualizarRazas(acRaza, esPerro);
                 actualizarVacunas(layoutVac, esPerro);
@@ -269,20 +293,25 @@ public class PacientesActivity extends AppCompatActivity {
 
         builder.setView(scroll);
         builder.setNegativeButton("Cancelar", null);
+
+        // El listener de "Guardar" va despues del show() para controlar
+        // si el dialogo se cierra o no segun haya errores de validacion
         builder.setPositiveButton("Guardar", null);
 
         android.app.AlertDialog dialog = builder.create();
         dialog.show();
 
         dialog.getButton(android.app.AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+
             String nombre = etNombre.getText().toString().trim();
+
             if (nombre.isEmpty()) {
                 Toast.makeText(this, "El nombre es obligatorio",
                         Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            // Condiciones
+            // Recorremos cada fila del layoutCond buscando el EditText dentro de ella
             List<String> condiciones = new ArrayList<>();
             for (int i = 0; i < layoutCond.getChildCount(); i++) {
                 android.view.View child = layoutCond.getChildAt(i);
@@ -297,7 +326,6 @@ public class PacientesActivity extends AppCompatActivity {
                 }
             }
 
-            // Vacunas
             List<String> vacunas = new ArrayList<>();
             for (int i = 0; i < layoutVac.getChildCount(); i++) {
                 android.view.View child = layoutVac.getChildAt(i);
@@ -305,7 +333,6 @@ public class PacientesActivity extends AppCompatActivity {
                     vacunas.add(((CheckBox) child).getText().toString());
             }
 
-            // Buscar ownerId por email si se indicó
             String emailDueno = etDueno.getText().toString().trim();
             Map<String, Object> mascota = new HashMap<>();
             mascota.put("nombre",      nombre);
@@ -318,10 +345,10 @@ public class PacientesActivity extends AppCompatActivity {
             mascota.put("vacunas",     vacunas);
 
             if (emailDueno.isEmpty()) {
-                // Sin dueño asignado
                 guardarMascota(mascota, dialog);
             } else {
-                // Buscar uid del dueño por email
+                // Buscamos el UID del dueno por email para asignarselo a la mascota
+                // limit(1) evita resultados multiples aunque haya emails duplicados
                 db.collection("users")
                         .whereEqualTo("email", emailDueno)
                         .limit(1).get()
@@ -337,6 +364,9 @@ public class PacientesActivity extends AppCompatActivity {
         });
     }
 
+
+    // Separado en su propio metodo porque se llama desde dos sitios:
+    // cuando hay dueno y cuando no hay dueno
     private void guardarMascota(Map<String, Object> mascota,
                                 android.app.AlertDialog dialog) {
         db.collection("mascotas").add(mascota)
@@ -351,15 +381,18 @@ public class PacientesActivity extends AppCompatActivity {
                                 Toast.LENGTH_LONG).show());
     }
 
-    // ─────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────
+
+    // ── Helpers ──────────────────────────────────────────────
+
+    // Actualiza las sugerencias de raza segun la especie elegida
     private void actualizarRazas(AutoCompleteTextView ac, boolean esPerro) {
         ac.setAdapter(new ArrayAdapter<>(this,
                 android.R.layout.simple_dropdown_item_1line,
                 esPerro ? RAZAS_PERRO : RAZAS_GATO));
     }
 
+    // Reemplaza los checkboxes de vacunas segun la especie
+    // Todos empiezan desmarcados porque es una mascota nueva
     private void actualizarVacunas(LinearLayout layout, boolean esPerro) {
         layout.removeAllViews();
         for (String v : (esPerro ? VACUNAS_PERRO : VACUNAS_GATO)) {
@@ -377,6 +410,7 @@ public class PacientesActivity extends AppCompatActivity {
         }
     }
 
+    // Añade una fila [campo de texto] [boton X] al contenedor de condiciones
     private void agregarCampoCond(LinearLayout layout) {
         LinearLayout fila = new LinearLayout(this);
         fila.setOrientation(LinearLayout.HORIZONTAL);
@@ -406,11 +440,13 @@ public class PacientesActivity extends AppCompatActivity {
         layout.addView(fila);
     }
 
+    // Lee un campo de un Map, devuelve "def" si no existe o no es String
     private String getStr(Map<String, Object> map, String key, String def) {
         Object val = map.get(key);
         return (val instanceof String) ? (String) val : def;
     }
 
+    // Etiqueta estilizada para los campos del formulario
     private TextView label(String texto) {
         TextView tv = new TextView(this);
         tv.setText(texto);
@@ -425,6 +461,7 @@ public class PacientesActivity extends AppCompatActivity {
         return tv;
     }
 
+    // Campo de texto estilizado con valor inicial y placeholder
     private EditText input(String valor, String hint) {
         EditText et = new EditText(this);
         et.setText(valor);
@@ -437,6 +474,7 @@ public class PacientesActivity extends AppCompatActivity {
         return et;
     }
 
+    // Spinner estilizado con las opciones que se le pasan
     private Spinner spinnerOf(String[] opciones) {
         Spinner sp = new Spinner(this);
         ArrayAdapter<String> ad = new ArrayAdapter<>(this,

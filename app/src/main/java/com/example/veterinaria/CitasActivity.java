@@ -6,26 +6,34 @@ import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
 import android.widget.*;
-
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Calendar;
 
+// Pantalla "Ver citas": muestra todas las citas ordenadas por fecha,
+// agrupadas por dia, con opciones de editar y cancelar
 public class CitasActivity extends AppCompatActivity {
 
+    // Contenedor donde pintamos las tarjetas de citas desde codigo Java
     private LinearLayout layoutCitas;
+
+    // Texto "No hay citas" oculto por defecto; visible solo si la lista esta vacia
     private TextView tvVacio;
+
     private FirebaseFirestore db;
+
+    // Declarado por si en el futuro se necesita saber quien esta logueado
     private FirebaseAuth auth;
 
+    // Horas disponibles: 09:00, 09:30, ... 17:00
+    // static final porque nunca cambian y se comparten entre todos los metodos
     private static final String[] HORAS = buildHoras();
 
+    // Genera el array de horas como metodo static porque HORAS tambien es static
     private static String[] buildHoras() {
         List<String> lista = new ArrayList<>();
         for (int h = 9; h <= 17; h++) {
@@ -34,6 +42,7 @@ public class CitasActivity extends AppCompatActivity {
         }
         return lista.toArray(new String[0]);
     }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,18 +58,21 @@ public class CitasActivity extends AppCompatActivity {
         cargarCitas();
     }
 
+    // onResume recarga la lista cada vez que la pantalla vuelve a ser visible
+    // Asi se reflejan cambios hechos desde otras pantallas
     @Override
     protected void onResume() {
         super.onResume();
         cargarCitas();
     }
 
-    // ─────────────────────────────────────────
-    // CARGAR CITAS
-    // ─────────────────────────────────────────
+
+    // Descarga todas las citas, las ordena por fecha+hora y las pinta en pantalla
     private void cargarCitas() {
         db.collection("citas").get()
                 .addOnSuccessListener(snapshot -> {
+
+                    // Limpiamos antes de rellenar para no mezclar datos viejos con nuevos
                     layoutCitas.removeAllViews();
 
                     if (snapshot.isEmpty()) {
@@ -70,9 +82,14 @@ public class CitasActivity extends AppCompatActivity {
                     tvVacio.setVisibility(View.GONE);
 
                     List<DocumentSnapshot> docs = new ArrayList<>(snapshot.getDocuments());
+
+                    // SimpleDateFormat para poder comparar fechas como objetos Date
+                    // Sin esto Java no puede ordenarlas porque son solo texto
                     SimpleDateFormat sdf = new SimpleDateFormat("d/M/yyyy HH:mm",
                             Locale.getDefault());
 
+                    // Ordenamos de menor a mayor fecha+hora
+                    // La lambda devuelve negativo si a va antes, positivo si va despues, 0 si iguales
                     docs.sort((a, b) -> {
                         try {
                             Date da  = sdf.parse(getStr(a, "fecha") + " " + getStr(a, "hora"));
@@ -82,7 +99,9 @@ public class CitasActivity extends AppCompatActivity {
                         return 0;
                     });
 
+                    // Cuando cambia la fecha pintamos una cabecera de dia nuevo
                     String fechaAnterior = "";
+
                     for (DocumentSnapshot doc : docs) {
                         String fecha    = getStr(doc, "fecha");
                         String hora     = getStr(doc, "hora");
@@ -91,7 +110,7 @@ public class CitasActivity extends AppCompatActivity {
                         String motivo   = getStr(doc, "motivo");
                         String citaId   = doc.getId();
 
-                        // Cabecera de fecha
+                        // Cabecera de fecha: solo se pinta cuando cambia el dia
                         if (!fecha.equals(fechaAnterior)) {
                             fechaAnterior = fecha;
                             TextView tvFecha = new TextView(this);
@@ -107,7 +126,7 @@ public class CitasActivity extends AppCompatActivity {
                             layoutCitas.addView(tvFecha);
                         }
 
-                        // Tarjeta
+                        // Tarjeta de la cita: layout vertical con hora, cliente, motivo y botones
                         LinearLayout tarjeta = new LinearLayout(this);
                         tarjeta.setOrientation(LinearLayout.VERTICAL);
                         tarjeta.setBackgroundColor(0xFFFFECB3);
@@ -118,7 +137,7 @@ public class CitasActivity extends AppCompatActivity {
                         pt.setMargins(0, 0, 0, 10);
                         tarjeta.setLayoutParams(pt);
 
-                        // Fila hora + paciente
+                        // Fila superior: hora + separador + nombre mascota
                         LinearLayout filaTop = new LinearLayout(this);
                         filaTop.setOrientation(LinearLayout.HORIZONTAL);
                         filaTop.setLayoutParams(new LinearLayout.LayoutParams(
@@ -138,6 +157,7 @@ public class CitasActivity extends AppCompatActivity {
                         tvSep.setTextSize(15f);
                         filaTop.addView(tvSep);
 
+                        // weight = 1f: ocupa el espacio sobrante tras hora y separador
                         TextView tvPaciente = new TextView(this);
                         tvPaciente.setText("🐾 " + paciente);
                         tvPaciente.setTextColor(0xFF4E342E);
@@ -146,10 +166,8 @@ public class CitasActivity extends AppCompatActivity {
                         tvPaciente.setLayoutParams(new LinearLayout.LayoutParams(
                                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f));
                         filaTop.addView(tvPaciente);
-
                         tarjeta.addView(filaTop);
 
-                        // Cliente
                         TextView tvCliente = new TextView(this);
                         tvCliente.setText("👤 " + cliente);
                         tvCliente.setTextColor(0xFF6D4C41);
@@ -161,7 +179,6 @@ public class CitasActivity extends AppCompatActivity {
                         tvCliente.setLayoutParams(pc);
                         tarjeta.addView(tvCliente);
 
-                        // Motivo
                         TextView tvMotivo = new TextView(this);
                         tvMotivo.setText("📋 " + motivo);
                         tvMotivo.setTextColor(0xFF6D4C41);
@@ -173,14 +190,13 @@ public class CitasActivity extends AppCompatActivity {
                         tvMotivo.setLayoutParams(pm);
                         tarjeta.addView(tvMotivo);
 
-                        // Fila botones
+                        // Fila de botones: ambos con weight 1 para repartirse el ancho a partes iguales
                         LinearLayout filaBotones = new LinearLayout(this);
                         filaBotones.setOrientation(LinearLayout.HORIZONTAL);
                         filaBotones.setLayoutParams(new LinearLayout.LayoutParams(
                                 LinearLayout.LayoutParams.MATCH_PARENT,
                                 LinearLayout.LayoutParams.WRAP_CONTENT));
 
-                        // Botón editar
                         Button btnEditar = new Button(this);
                         btnEditar.setText("✏️ Editar");
                         btnEditar.setAllCaps(false);
@@ -191,11 +207,11 @@ public class CitasActivity extends AppCompatActivity {
                                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
                         pEdit.setMargins(0, 0, 6, 0);
                         btnEditar.setLayoutParams(pEdit);
+                        // citaId esta capturado en el closure de la lambda
                         btnEditar.setOnClickListener(v ->
                                 mostrarDialogEditar(citaId, fecha, hora, motivo));
                         filaBotones.addView(btnEditar);
 
-                        // Botón eliminar
                         Button btnEliminar = new Button(this);
                         btnEliminar.setText("🗑️ Cancelar");
                         btnEliminar.setAllCaps(false);
@@ -217,25 +233,25 @@ public class CitasActivity extends AppCompatActivity {
                                 Toast.LENGTH_LONG).show());
     }
 
-    // ─────────────────────────────────────────
-    // DIALOG EDITAR CITA
-    // ─────────────────────────────────────────
+
+    // Popup de edicion con los datos actuales ya rellenos
     private void mostrarDialogEditar(String citaId, String fechaActual,
                                      String horaActual, String motivoActual) {
         LinearLayout form = new LinearLayout(this);
         form.setOrientation(LinearLayout.VERTICAL);
         form.setPadding(48, 32, 48, 32);
 
-        // Fecha
         form.addView(labelEdit("Fecha"));
         EditText etFecha = new EditText(this);
         etFecha.setText(fechaActual);
+        // setFocusable(false): solo se puede cambiar la fecha usando el calendario
         etFecha.setFocusable(false);
         etFecha.setClickable(true);
         etFecha.setHint("Selecciona fecha");
         etFecha.setTextColor(0xFF4E342E);
         etFecha.setBackgroundColor(0xFFFFECB3);
         etFecha.setPadding(16, 12, 16, 12);
+        // TYPE_NULL evita que aparezca el teclado al pulsar el campo
         etFecha.setInputType(InputType.TYPE_NULL);
         form.addView(etFecha);
 
@@ -249,18 +265,17 @@ public class CitasActivity extends AppCompatActivity {
                     cal.get(Calendar.DAY_OF_MONTH)).show();
         });
 
-        // Hora
         form.addView(labelEdit("Hora"));
         Spinner spHora = new Spinner(this);
         ArrayAdapter<String> adHora = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, HORAS);
         adHora.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spHora.setAdapter(adHora);
+        // Buscamos la hora actual para preseleccionarla; sin esto arrancaria en 09:00
         for (int i = 0; i < HORAS.length; i++)
             if (HORAS[i].equals(horaActual)) { spHora.setSelection(i); break; }
         form.addView(spHora);
 
-        // Motivo
         form.addView(labelEdit("Motivo"));
         EditText etMotivo = new EditText(this);
         etMotivo.setText(motivoActual);
@@ -270,6 +285,8 @@ public class CitasActivity extends AppCompatActivity {
         etMotivo.setInputType(InputType.TYPE_CLASS_TEXT);
         form.addView(etMotivo);
 
+        // El listener de "Guardar" va despues del show() para controlar
+        // si el dialogo se cierra o no segun haya errores de validacion
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("✏️ Editar cita")
                 .setView(form)
@@ -289,6 +306,7 @@ public class CitasActivity extends AppCompatActivity {
                 return;
             }
 
+            // update() modifica solo los campos del Map sin tocar el resto del documento
             Map<String, Object> update = new HashMap<>();
             update.put("fecha",  nuevaFecha);
             update.put("hora",   nuevaHora);
@@ -308,9 +326,8 @@ public class CitasActivity extends AppCompatActivity {
         });
     }
 
-    // ─────────────────────────────────────────
-    // ELIMINAR CITA
-    // ─────────────────────────────────────────
+
+    // Popup de confirmacion antes de borrar la cita
     private void confirmarEliminarCita(String citaId) {
         new AlertDialog.Builder(this)
                 .setTitle("⚠️ Cancelar cita")
@@ -329,14 +346,16 @@ public class CitasActivity extends AppCompatActivity {
                 .show();
     }
 
-    // ─────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────
+
+    // ── Helpers ──────────────────────────────────────────────
+
+    // Lee un campo de un DocumentSnapshot; devuelve "-" si no existe o es null
     private String getStr(DocumentSnapshot doc, String key) {
         String val = doc.getString(key);
         return val != null ? val : "-";
     }
 
+    // Etiqueta estilizada para los campos del formulario de edicion
     private TextView labelEdit(String texto) {
         TextView tv = new TextView(this);
         tv.setText(texto);
