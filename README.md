@@ -4,7 +4,7 @@ Aplicación Android para la gestión de citas y pacientes veterinarios.
 
 ## Documentación
 
-La documentación del proyecto se encuentra en la rama **Files** del repositorio.
+La documentación del proyecto se encuentra en la rama **Files** del repositorio en nuevaCarpeta.
 
 En dicha rama se incluyen:
 
@@ -13,7 +13,7 @@ En dicha rama se incluyen:
 - Memoria del Proyecto
 
   ##Apk instalable
-  Se encuentra también en la rama **Files** del repositorio.
+  Se encuentra también en la rama **Files** del repositorio en nuevaCarpeta.
 
 ## Autor
 
