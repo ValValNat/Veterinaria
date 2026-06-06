@@ -12,6 +12,9 @@ En dicha rama se incluyen:
 - Documentación Técnica
 - Memoria del Proyecto
 
+  ##Apk instalable
+  Se encuentra también en la rama **Files** del repositorio.
+
 ## Autor
 
 ValValNat
